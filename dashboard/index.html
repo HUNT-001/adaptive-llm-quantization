@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Anvil — optimization dashboard</title>
+<style>
+  :root { --bg:#0d1117; --card:#161b22; --line:#30363d; --fg:#e6edf3;
+          --muted:#8b949e; --anvil:#d62728; --greedy:#1f77b4; --random:#7f7f7f; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif; }
+  header { padding:28px 32px 12px; }
+  h1 { margin:0; font-size:22px; letter-spacing:.2px; }
+  .sub { color:var(--muted); margin-top:4px; }
+  main { padding:16px 32px 48px; max-width:1100px; }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin:18px 0 26px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; }
+  .card h3 { margin:0 0 6px; font-size:13px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); }
+  .big { font-size:30px; font-weight:700; }
+  .card.anvil { border-color:var(--anvil); }
+  .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:7px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
+  .panel h2 { font-size:15px; margin:0 0 12px; }
+  img { width:100%; border-radius:8px; background:#fff; }
+  .trace { font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace; color:#c9d1d9;
+           white-space:pre-wrap; max-height:360px; overflow:auto; }
+  .trace .win { color:#7ee787; }
+  .note { color:var(--muted); font-size:13px; margin-top:8px; }
+  @media(max-width:820px){ .cards,.grid2{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<header>
+  <h1>Anvil — planning-based optimization for Arm</h1>
+  <div class="sub">strategic search vs brute force · same evaluation budget · powered by Arm Performix</div>
+</header>
+<main>
+  <div class="cards" id="cards"></div>
+  <div class="grid2">
+    <div class="panel">
+      <h2>Convergence — best feasible latency vs evaluations</h2>
+      <img id="conv" alt="convergence chart" src="../experiments/convergence.png" />
+    </div>
+    <div class="panel">
+      <h2>Latency vs accuracy (Pareto)</h2>
+      <img id="pareto" alt="pareto chart" src="../experiments/pareto.png" />
+    </div>
+  </div>
+  <div class="panel" style="margin-top:20px">
+    <h2>Anvil decision trace — why each move</h2>
+    <div class="trace" id="trace">loading results…</div>
+    <div class="note">Serve locally so the browser can read results.json:
+      <code>cd .. &amp;&amp; python -m http.server</code> then open
+      <code>http://localhost:8000/dashboard/</code>.</div>
+  </div>
+</main>
+<script>
+const COLORS = { anvil:'var(--anvil)', greedy:'var(--greedy)', random:'var(--random)' };
+async function load() {
+  let data;
+  try { data = await (await fetch('../experiments/results.json')).json(); }
+  catch (e) {
+    document.getElementById('trace').textContent =
+      'Could not load ../experiments/results.json.\nRun: python experiments/run_experiment.py --out experiments\n'
+      + 'then serve with: python -m http.server';
+    return;
+  }
+  const cards = document.getElementById('cards');
+  ['random','greedy','anvil'].forEach(name => {
+    const r = data[name]; if(!r) return;
+    const el = document.createElement('div');
+    el.className = 'card' + (name==='anvil'?' anvil':'');
+    el.innerHTML = `<h3><span class="dot" style="background:${COLORS[name]}"></span>${name}</h3>
+      <div class="big">${r.speedup.toFixed(2)}×</div>
+      <div class="note">${r.best.latency_ms} ms · acc ${r.best.accuracy} · ${r.evals_used} evals</div>`;
+    cards.appendChild(el);
+  });
+  const t = data.anvil ? data.anvil.trace : [];
+  const tr = document.getElementById('trace');
+  tr.innerHTML = t.map(line =>
+    /result:|faster/.test(line) ? `<span class="win">${line}</span>` : line
+  ).join('\n');
+}
+load();
+</script>
+</body>
+</html>

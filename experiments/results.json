@@ -1,0 +1,54 @@
+{
+  "random": {
+    "summary": "random: 1.00x faster (11.4 -> 11.4 ms), acc 1.000, mem 1328 MB, in 60 evals",
+    "speedup": 1.0,
+    "baseline_ms": 11.4313,
+    "best": {
+      "latency_ms": 11.4313,
+      "memory_mb": 1327.759,
+      "accuracy": 1.0,
+      "throughput": 87.4788
+    },
+    "evals_used": 60,
+    "trace": []
+  },
+  "greedy": {
+    "summary": "greedy: 1.09x faster (11.4 -> 10.5 ms), acc 0.951, mem 1200 MB, in 60 evals",
+    "speedup": 1.0923,
+    "baseline_ms": 11.4313,
+    "best": {
+      "latency_ms": 10.4656,
+      "memory_mb": 1200.454,
+      "accuracy": 0.95097,
+      "throughput": 95.5511
+    },
+    "evals_used": 60,
+    "trace": []
+  },
+  "anvil": {
+    "summary": "anvil: 1.20x faster (11.4 -> 9.5 ms), acc 0.955, mem 1207 MB, in 60 evals",
+    "speedup": 1.2043,
+    "baseline_ms": 11.4313,
+    "best": {
+      "latency_ms": 9.4925,
+      "memory_mb": 1206.735,
+      "accuracy": 0.9545,
+      "throughput": 105.3465
+    },
+    "evals_used": 60,
+    "trace": [
+      "baseline: 11.4 ms, acc 1.000, mem 1328 MB (floor acc>=0.95)",
+      "round 1: best move -> quant[10]=int4: surrogate predicted 9.6 ms @ acc 0.968; measured 10.8 ms @ acc 0.960 [score +0.071, k_lat=1.160]",
+      "round 2: best move -> quant[4]=int8: surrogate predicted 10.1 ms @ acc 0.956; measured 10.2 ms @ acc 0.955 [score +0.127, k_lat=1.178]",
+      "round 3: best move -> fuse[6]: surrogate predicted 10.2 ms @ acc 0.955; measured 10.3 ms @ acc 0.955 [score +0.119, k_lat=1.191]",
+      "round 4: best move -> fuse[6]: surrogate predicted 10.3 ms @ acc 0.954; measured 10.3 ms @ acc 0.955 [score +0.122, k_lat=1.183]",
+      "round 5: best move -> fuse[6]: surrogate predicted 10.1 ms @ acc 0.954; measured 9.9 ms @ acc 0.955 [score +0.158, k_lat=1.180]",
+      "round 6: best move -> fuse[6]: surrogate predicted 10.0 ms @ acc 0.954; measured 10.1 ms @ acc 0.955 [score +0.139, k_lat=1.171]",
+      "round 7: best move -> fuse[8]: surrogate predicted 9.9 ms @ acc 0.954; measured 9.8 ms @ acc 0.955 [score +0.163, k_lat=1.171]",
+      "round 8: best move -> fuse[7]: surrogate predicted 9.8 ms @ acc 0.954; measured 9.7 ms @ acc 0.955 [score +0.176, k_lat=1.161]",
+      "round 9: best move -> fuse[5]: surrogate predicted 9.7 ms @ acc 0.955; measured 9.9 ms @ acc 0.955 [score +0.158, k_lat=1.159]",
+      "round 10: best move -> fuse[5]: surrogate predicted 9.6 ms @ acc 0.955; measured 9.8 ms @ acc 0.955 [score +0.165, k_lat=1.161]",
+      "result: 1.20x faster, acc 0.955, 60 evals"
+    ]
+  }
+}
