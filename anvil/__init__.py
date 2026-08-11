@@ -11,6 +11,7 @@ from .profiler import MockProfiler, PerformixProfiler, Profiler
 from .planner import anvil_plan
 from .baselines import greedy_search, random_search
 from .models import demo_transformer
+from .mobile import MobileMockProfiler, MobileProfiler, mobile_llm_spec
 
 __version__ = "0.1.0"
 
@@ -18,4 +19,5 @@ __all__ = [
     "Block", "Metrics", "ModelSpec", "OptState", "search_space_size",
     "Objective", "Profiler", "MockProfiler", "PerformixProfiler",
     "anvil_plan", "greedy_search", "random_search", "demo_transformer",
+    "MobileMockProfiler", "MobileProfiler", "mobile_llm_spec",
 ]
