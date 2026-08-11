@@ -6,7 +6,7 @@ Run:
 Each method gets a FRESH profiler (so budgets are independent and fair) but the
 same model, same objective, and same accuracy floor. Outputs a summary table,
 the convergence + Pareto charts, and results.json (including Anvil's decision
-trace). This is the artifact the demo video is built around.
+trace).
 
 Swap MockProfiler -> PerformixProfiler (same interface) to run the identical
 experiment on the Arm target with real measurements.
