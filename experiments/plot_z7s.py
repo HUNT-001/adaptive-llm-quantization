@@ -125,6 +125,54 @@ def frontier_chart():
     return p
 
 
+def achievable_region_chart():
+    """The money chart: everything reachable with KleidiAI-accelerated types,
+    vs the unaccelerated default sitting in a region software can't reach."""
+    lay = D["frontier_sweep"]["points"]
+    ten = D["tensor_granularity_probe"]["configs"]
+    bar = D["tensor_granularity_probe"]["bar"]
+
+    fig, ax = plt.subplots(figsize=(8.6, 5.4))
+
+    lx = [p["size_mib"] for p in lay]
+    ly = [p["ppl"] for p in lay]
+    ax.plot(lx, ly, "-o", color="#777", markersize=6, linewidth=1.5,
+            label="KleidiAI-fast: per-layer configs", zorder=2)
+
+    tx = [c["size_mib"] for c in ten]
+    ty = [c["ppl"] for c in ten]
+    ax.scatter(tx, ty, marker="^", s=95, color="#e08214", edgecolor="black",
+               linewidth=0.6, zorder=3, label="KleidiAI-fast: per-tensor configs")
+
+    ax.scatter([bar["q4_k_m_size_mib"]], [bar["q4_k_m_ppl"]], marker="s", s=170,
+               color=DEF, edgecolor="black", linewidth=0.8, zorder=5,
+               label="Q4_K_M default (NOT accelerated)")
+
+    sel = next(p for p in lay if p.get("anvil_selected"))
+    ax.scatter([sel["size_mib"]], [sel["ppl"]], marker="*", s=420, color=ANVIL,
+               edgecolor="black", linewidth=0.8, zorder=6,
+               label="Anvil's pick (fast + beats default quality)")
+
+    # the gap the missing kernel creates
+    ax.annotate("", xy=(bar["q4_k_m_size_mib"], bar["q4_k_m_ppl"]),
+                xytext=(988, 10.147),
+                arrowprops=dict(arrowstyle="<->", color="#b30000", lw=2))
+    ax.text(1015, 9.82, "the gap no KleidiAI-fast\nconfiguration can close\n(~0.54 perplexity)",
+            color="#b30000", fontsize=9.5, fontweight="bold")
+
+    ax.set_xlabel("Model size on disk (MiB)  →  smaller is better")
+    ax.set_ylabel("Perplexity  →  lower is better")
+    ax.set_title("What KleidiAI-accelerated quantization can and cannot reach\n"
+                 "20 on-device measurements, Qwen2.5-1.5B on Snapdragon 695",
+                 fontsize=11)
+    ax.grid(alpha=0.3)
+    ax.legend(loc="upper right", fontsize=9)
+    p = os.path.join(HERE, "z7s_achievable.png")
+    fig.tight_layout(); fig.savefig(p, dpi=140); plt.close(fig)
+    return p
+
+
 if __name__ == "__main__":
-    for p in (kleidiai_chart(), head_to_head_chart(), frontier_chart()):
+    for p in (kleidiai_chart(), head_to_head_chart(), frontier_chart(),
+              achievable_region_chart()):
         print("wrote:", p)
