@@ -72,6 +72,78 @@
       "Mapping this frontier cost 8 on-device evaluations (33.7 min); Anvil reached the same optimum inside its 14-evaluation budget while also measuring off-axis configurations."
     ]
   },
+  "tensor_granularity_probe": {
+    "note": "Can per-TENSOR protection (cheaper than per-layer: attn_v/attn_k are 0.75 MiB vs ffn_* at 26.25 MiB) reach the Q4_K_M quality bar at Q4_K_M's size, using only KleidiAI-accelerated types? Base Q4_0, listed tensors promoted to Q8_0, token_embd pinned Q8_0. 4 perplexity chunks.",
+    "bar": {"q4_k_m_size_mib": 935, "q4_k_m_ppl": 9.605},
+    "configs": [
+      {"promoted": ["attn_v"],                            "size_mib": 950.8,  "ppl": 10.3803, "beats_bar": false},
+      {"promoted": ["attn_v", "attn_k"],                  "size_mib": 956.0,  "ppl": 10.3172, "beats_bar": false},
+      {"promoted": ["attn_v", "attn_k", "attn_output"],   "size_mib": 987.5,  "ppl": 10.1466, "beats_bar": false},
+      {"promoted": ["attn_v", "attn_k", "ffn_down"],      "size_mib": 1139.8, "ppl": 10.1673, "beats_bar": false}
+    ],
+    "conclusion": "NEGATIVE RESULT, and the most useful one. At ~950-990 MiB no arrangement of Q4_0/Q8_0 comes close to Q4_K_M's 9.605. The default's advantage is not WHICH tensors it protects - it is that K-quants carry better quality-per-bit (super-block scales). Tensor-level protection cannot recover it. Combined with the layer sweep, 20 on-device measurements establish that KleidiAI's type coverage - not the search - is the binding constraint."
+  },
+  "thermal_instability_finding": {
+    "headline": "On this class of mid-range mobile silicon, on-device LLM speed benchmarks are NOT reproducible without bracketed reference controls. We measured up to -44% drift in a single 25-minute session.",
+    "why_it_matters": "Any mobile LLM benchmark reporting bare tokens/sec without a thermal control is unreliable. We report this as a methodology contribution because it invalidates a class of comparisons other work performs casually - including, initially, our own.",
+    "evidence": {
+      "session_A_37min": {
+        "reference_prefill_start": 57.8, "reference_prefill_end": 54.9, "drift_pct": -4.9,
+        "config_sequence_prefill": [57.8, 27.8, 54.6, 56.4, 32.0, 48.7, 52.2, 56.4, 15.5, 54.9],
+        "note": "Sequence is non-monotonic - it bounces rather than decaying, so the variation is not simple thermal decay."
+      },
+      "session_B_25min": {
+        "reference_prefill_start": 58.7, "reference_prefill_end": 32.8, "drift_pct": -44.2,
+        "note": "Same reference configuration, same device, same binary. A -44% swing inside one session."
+      },
+      "reproduced_low_readings": {
+        "k0": [27.8, 25.1], "k16": [32.0, 33.7],
+        "note": "Both re-measured and reproduced, but with the reference itself unstable we cannot attribute these to the configurations rather than to the environment."
+      }
+    },
+    "consequence_for_this_work": "We DO NOT publish a quality-vs-latency Pareto frontier over accelerated configurations - the environment cannot support that granularity. Speed claims are made only from a single isolated, cooled, within-session comparison. Quality and size results are unaffected because perplexity and file size are deterministic and thermally invariant.",
+    "recommended_practice": "Bracket every mobile inference benchmark with a fixed reference configuration measured before and after; report the drift; discard sessions exceeding a pre-declared threshold. Our bench_frontier_z7s.py implements this control."
+  },
+  "speed_evidence_used": {
+    "note": "The ONLY speed comparison we make headline claims from: three uniform formats, one isolated cooled session, no drift confound.",
+    "measurements": [
+      {"format": "Q8_0",   "bits": 8,   "prefill_ts": 67.4, "kleidiai_accelerated": true},
+      {"format": "Q4_0",   "bits": 4,   "prefill_ts": 49.2, "kleidiai_accelerated": true},
+      {"format": "Q4_K_M", "bits": 4.5, "prefill_ts": 29.3, "kleidiai_accelerated": false}
+    ],
+    "conclusion": "Prefill speed tracks kernel availability, not bit-width: the 8-bit accelerated model is 2.3x faster than the 4.5-bit unaccelerated one, and the 4-bit accelerated model is 1.68x faster. Fewer bits does not mean faster prefill on this device - having a kernel does."
+  },
+  "measurement_variance_disclosure": {
+    "issue": "Q4_K_M prefill measured 29.3 t/s in an isolated cool run and 17.9 t/s in the back-to-back comparison session. The Snapdragon 695 throttles, so ABSOLUTE tokens/sec drifts between sessions.",
+    "policy": "Only WITHIN-SESSION ratios are treated as reliable. Cross-session absolute values are reported but never used to form a headline ratio.",
+    "anvil_vs_q4km_ttft_ratio": {
+      "within_session_back_to_back": 2.94,
+      "conservative_cross_session": 1.79,
+      "reported_range": "1.8x - 2.9x depending on thermal state; the 1.8x figure is the conservative floor and is the one we lead with in any single-number claim."
+    }
+  },
+  "kernel_value_counterfactual": {
+    "question": "If Arm added a Q4_K KleidiAI kernel, how much would it actually help? Answered from measured data, no new experiment required.",
+    "method": "Q4_0 (KleidiAI-accelerated, 886 MiB) and Q4_K_M (not accelerated, 935 MiB) are comparable-bit-width 4-bit formats measured in the SAME cool session. Their prefill ratio isolates the acceleration headroom available to a 4-bit format on this silicon.",
+    "measured_headroom": {
+      "q4_0_prefill_ts": 49.2,
+      "q4_k_m_prefill_ts": 29.3,
+      "ratio": 1.68,
+      "interpretation": "The existing Q4_0 kernel already demonstrates a 1.68x uplift over the unaccelerated path for a 4-bit format on this device."
+    },
+    "engineering_specification": {
+      "target": "A Q4_K kernel would need approximately 1.7x - 1.8x over the current unaccelerated Q4_K_M path to reach parity with the best KleidiAI-accelerated configuration we measured.",
+      "projected_outcome": "Q4_K_M would move from 29.3 to ~49 t/s prefill while retaining its 935 MiB size and 9.605 perplexity - dominating Anvil's best accelerated config (1386 MiB, 9.522) on size at comparable speed.",
+      "consequence": "That single kernel would collapse the quality-vs-latency trade-off mobile developers face today.",
+      "caveat": "K-quant dequantization is inherently more complex than Q4_0 (super-block scales), and Q4_K_M also contains Q6_K tensors that equally lack kernels, so full parity with Q4_0 may not be attainable. 1.68x is the demonstrated headroom for the simpler format, treated here as an optimistic bound."
+    },
+    "evidence_base": "20 on-device measurements: 8 uniform baselines, 8-point layer-granularity frontier, 4-point tensor-granularity probe."
+  },
+  "claim_scope": {
+    "note": "Deliberately narrow wording. Our measurements cover ONE model (Qwen2.5-1.5B) on ONE Arm device (Snapdragon 695) with ONE runtime (llama.cpp build 10354).",
+    "supported_claim": "For the tested Arm mobile configuration, KleidiAI accelerates Q4_0/Q8_0 paths but not Q4_K_M; a 20-measurement search shows Q4_0/Q8_0 tensor selection cannot reproduce Q4_K_M's quality at comparable model size.",
+    "not_claimed": "We do NOT claim this generalises to every Arm device, every model, or the entire mobile LLM ecosystem. Q4_K_M's status as a widely used default is context, not a measured result of this work."
+  },
   "live_demo": {
     "command": "llama-cli -m anvil_best.gguf -t 4 -p \"Explain why quantizing a neural network makes it faster, in two sentences.\" -n 80",
     "observed": "coherent two-sentence answer generated on-device",
