@@ -1,0 +1,46 @@
+{
+  "objectives": [
+    "prefill_ts",
+    "gen_ts",
+    "ppl",
+    "size_mib"
+  ],
+  "points": [
+    {
+      "label": "20 protected (Anvil)",
+      "k": 20,
+      "ppl": 9.522,
+      "prefill_ts": 52.6,
+      "gen_ts": 6.73,
+      "size_mib": 1386,
+      "accelerated": true
+    },
+    {
+      "label": "Q4_K_M default",
+      "k": null,
+      "ppl": 9.605,
+      "prefill_ts": 17.9,
+      "gen_ts": 9.78,
+      "size_mib": 935,
+      "accelerated": false
+    }
+  ],
+  "pareto_front": [
+    {
+      "label": "20 protected (Anvil)",
+      "k": 20,
+      "ppl": 9.522,
+      "prefill_ts": 52.6,
+      "gen_ts": 6.73,
+      "size_mib": 1386,
+      "accelerated": true
+    }
+  ],
+  "workload_optima": {
+    "prompt_heavy (best TTFT)": "20 protected (Anvil)",
+    "generation_heavy (best decode)": "20 protected (Anvil)",
+    "storage_constrained (smallest)": "20 protected (Anvil)",
+    "quality_first (lowest ppl)": "20 protected (Anvil)"
+  },
+  "efficiency": []
+}
