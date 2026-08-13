@@ -81,7 +81,7 @@
       {"promoted": ["attn_v", "attn_k", "attn_output"],   "size_mib": 987.5,  "ppl": 10.1466, "beats_bar": false},
       {"promoted": ["attn_v", "attn_k", "ffn_down"],      "size_mib": 1139.8, "ppl": 10.1673, "beats_bar": false}
     ],
-    "conclusion": "NEGATIVE RESULT, and the most useful one. At ~950-990 MiB no arrangement of Q4_0/Q8_0 comes close to Q4_K_M's 9.605. The default's advantage is not WHICH tensors it protects - it is that K-quants carry better quality-per-bit (super-block scales). Tensor-level protection cannot recover it. Combined with the layer sweep, 20 on-device measurements establish that KleidiAI's type coverage - not the search - is the binding constraint."
+    "conclusion": "NEGATIVE RESULT, and the most useful one. At 951-1140 MiB no arrangement of Q4_0/Q8_0 comes close to Q4_K_M's 9.605. The default's advantage is not WHICH tensors it protects - it is that K-quants carry better quality-per-bit (super-block scales). Tensor-level protection cannot recover it. Combined with the layer sweep, 14 matched-setting measurements (all at 4 perplexity chunks) establish that the accelerated-format coverage - not the search - is the binding constraint."
   },
   "thermal_instability_finding": {
     "headline": "On this class of mid-range mobile silicon, on-device LLM speed benchmarks are NOT reproducible without bracketed reference controls. We measured up to -44% drift in a single 25-minute session.",
@@ -137,11 +137,11 @@
       "consequence": "That single kernel would collapse the quality-vs-latency trade-off mobile developers face today.",
       "caveat": "K-quant dequantization is inherently more complex than Q4_0 (super-block scales), and Q4_K_M also contains Q6_K tensors that equally lack kernels, so full parity with Q4_0 may not be attainable. 1.68x is the demonstrated headroom for the simpler format, treated here as an optimistic bound."
     },
-    "evidence_base": "20 on-device measurements: 8 uniform baselines, 8-point layer-granularity frontier, 4-point tensor-granularity probe."
+    "evidence_base": "14 measurements at matched 4-chunk perplexity: 8-point layer-granularity frontier, 4-point tensor-granularity probe, F16 reference, Q4_K_M reference. Exploratory 10-chunk perplexities and speed benchmarks are reported separately and never mixed with these."
   },
   "claim_scope": {
     "note": "Deliberately narrow wording. Our measurements cover ONE model (Qwen2.5-1.5B) on ONE Arm device (Snapdragon 695) with ONE runtime (llama.cpp build 10354).",
-    "supported_claim": "For the tested Arm mobile configuration, KleidiAI accelerates Q4_0/Q8_0 paths but not Q4_K_M; a 20-measurement search shows Q4_0/Q8_0 tensor selection cannot reproduce Q4_K_M's quality at comparable model size.",
+    "supported_claim": "For the tested Arm mobile configuration, KleidiAI accelerates Q4_0/Q8_0 paths but not Q4_K_M; a 14-measurement study at matched settings shows Q4_0/Q8_0 tensor selection cannot reproduce Q4_K_M's quality at comparable model size.",
     "not_claimed": "We do NOT claim this generalises to every Arm device, every model, or the entire mobile LLM ecosystem. Q4_K_M's status as a widely used default is context, not a measured result of this work."
   },
   "live_demo": {
